@@ -101,50 +101,54 @@ record_summary() {
 print_summary() {
   echo "==================== Summary ===================="
 
-  local max_status=6 max_file=4 max_before=6 max_after=5 max_note=4
+  # sensible defaults
+  local status_w=12 file_w=40 before_w=8 after_w=8 note_w=50
   local line status file before after note
+
   for line in "${SUMMARY[@]}"; do
     IFS='|' read -r status file before after note <<<"$line"
-    (( ${#status} > max_status )) && max_status=${#status}
-    (( ${#file} > max_file )) && max_file=${#file}
-    (( ${#before} > max_before )) && max_before=${#before}
-    (( ${#after} > max_after )) && max_after=${#after}
-    (( ${#note} > max_note )) && max_note=${#note}
+    (( ${#status} > status_w )) && status_w=${#status}
+    (( ${#file} > file_w )) && file_w=${#file}
+    (( ${#before} > before_w )) && before_w=${#before}
+    (( ${#after} > after_w )) && after_w=${#after}
+    (( ${#note} > note_w )) && note_w=${#note}
   done
 
-  # Caps to avoid excessively wide output
-  (( max_file > 80 )) && max_file=80
-  (( max_note > 60 )) && max_note=60
+  # enforce caps so table stays compact
+  (( file_w > 60 )) && file_w=60
+  (( note_w > 80 )) && note_w=80
 
-  printf "%-${max_status}s | %-""${max_file}""s | %-""${max_before}""s | %-""${max_after}""s | %s\n" \
-    "Status" "File" "Before" "After" "Note"
+  local fmt
+  fmt="%-${status_w}s | %-${file_w}s | %-${before_w}s | %-${after_w}s | %s\n"
 
-  # separator line
+  printf "$fmt" "Status" "File" "Before" "After" "Note"
+
   local sep
-  sep="$(printf '%*s' "$max_status" '' | tr ' ' '-')"
+  sep="$(printf '%*s' "$status_w" '' | tr ' ' '-')"
   sep+="-+-"
-  sep+="$(printf '%*s' "$max_file" '' | tr ' ' '-')"
+  sep+="$(printf '%*s' "$file_w" '' | tr ' ' '-')"
   sep+="-+-"
-  sep+="$(printf '%*s' "$max_before" '' | tr ' ' '-')"
+  sep+="$(printf '%*s' "$before_w" '' | tr ' ' '-')"
   sep+="-+-"
-  sep+="$(printf '%*s' "$max_after" '' | tr ' ' '-')"
+  sep+="$(printf '%*s' "$after_w" '' | tr ' ' '-')"
   sep+="-+-"
-  sep+="$(printf '%*s' "$max_note" '' | tr ' ' '-')"
+  sep+="$(printf '%*s' "$note_w" '' | tr ' ' '-')"
   echo "$sep"
 
   for line in "${SUMMARY[@]}"; do
     IFS='|' read -r status file before after note <<<"$line"
     local file_display="$file" note_display="$note"
-    if (( ${#file_display} > max_file )); then
-      local trunc_len=$((max_file-3))
-      file_display="${file_display:0:trunc_len}..."
+    if (( ${#file_display} > file_w )); then
+      local tn=$((file_w-3))
+      (( tn < 0 )) && tn=0
+      file_display="${file_display:0:tn}..."
     fi
-    if (( ${#note_display} > max_note )); then
-      local trunc_len2=$((max_note-3))
-      note_display="${note_display:0:trunc_len2}..."
+    if (( ${#note_display} > note_w )); then
+      local tn2=$((note_w-3))
+      (( tn2 < 0 )) && tn2=0
+      note_display="${note_display:0:tn2}..."
     fi
-    printf "%-${max_status}s | %-""${max_file}""s | %-""${max_before}""s | %-""${max_after}""s | %s\n" \
-      "$status" "$file_display" "$before" "$after" "$note_display"
+    printf "$fmt" "$status" "$file_display" "$before" "$after" "$note_display"
   done
 
   echo "================================================="
