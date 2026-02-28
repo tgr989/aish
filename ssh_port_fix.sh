@@ -100,13 +100,53 @@ record_summary() {
 
 print_summary() {
   echo "==================== Summary ===================="
-  printf "%-10s | %-50s | %-16s | %-16s | %s\n" "Status" "File" "Before" "After" "Note"
-  echo "---------------------------------------------------------------------------------------------------------------"
+
+  local max_status=6 max_file=4 max_before=6 max_after=5 max_note=4
   local line status file before after note
   for line in "${SUMMARY[@]}"; do
     IFS='|' read -r status file before after note <<<"$line"
-    printf "%-10s | %-50s | %-16s | %-16s | %s\n" "$status" "$file" "$before" "$after" "$note"
+    (( ${#status} > max_status )) && max_status=${#status}
+    (( ${#file} > max_file )) && max_file=${#file}
+    (( ${#before} > max_before )) && max_before=${#before}
+    (( ${#after} > max_after )) && max_after=${#after}
+    (( ${#note} > max_note )) && max_note=${#note}
   done
+
+  # Caps to avoid excessively wide output
+  (( max_file > 80 )) && max_file=80
+  (( max_note > 60 )) && max_note=60
+
+  printf "%-${max_status}s | %-""${max_file}""s | %-""${max_before}""s | %-""${max_after}""s | %s\n" \
+    "Status" "File" "Before" "After" "Note"
+
+  # separator line
+  local sep
+  sep="$(printf '%*s' "$max_status" '' | tr ' ' '-')"
+  sep+="-+-"
+  sep+="$(printf '%*s' "$max_file" '' | tr ' ' '-')"
+  sep+="-+-"
+  sep+="$(printf '%*s' "$max_before" '' | tr ' ' '-')"
+  sep+="-+-"
+  sep+="$(printf '%*s' "$max_after" '' | tr ' ' '-')"
+  sep+="-+-"
+  sep+="$(printf '%*s' "$max_note" '' | tr ' ' '-')"
+  echo "$sep"
+
+  for line in "${SUMMARY[@]}"; do
+    IFS='|' read -r status file before after note <<<"$line"
+    local file_display="$file" note_display="$note"
+    if (( ${#file_display} > max_file )); then
+      local trunc_len=$((max_file-3))
+      file_display="${file_display:0:trunc_len}..."
+    fi
+    if (( ${#note_display} > max_note )); then
+      local trunc_len2=$((max_note-3))
+      note_display="${note_display:0:trunc_len2}..."
+    fi
+    printf "%-${max_status}s | %-""${max_file}""s | %-""${max_before}""s | %-""${max_after}""s | %s\n" \
+      "$status" "$file_display" "$before" "$after" "$note_display"
+  done
+
   echo "================================================="
 }
 
