@@ -8,6 +8,8 @@ PORT_DEFAULT="34253"
 PORT="$PORT_DEFAULT"
 DRY_RUN=false
 DO_RELOAD=false
+DO_PROCESS_D=false
+ONLY_D=false
 
 usage() {
   cat <<'EOF'
@@ -29,6 +31,10 @@ Examples:
 
   # Remote run with args
   curl -fsSL https://raw.githubusercontent.com/<you>/<repo>/ssh_port_fix.sh | sudo bash -s -- --port 34253 --reload
+  # Process files under /etc/ssh/sshd_config.d/ (disabled by default)
+  curl -fsSL https://raw.githubusercontent.com/<you>/<repo>/ssh_port_fix.sh | sudo bash -s -- --port 34253 --with-sshd-config-d --reload
+  # Only process files under /etc/ssh/sshd_config.d/ (will skip /etc/ssh/sshd_config)
+  curl -fsSL https://raw.githubusercontent.com/<you>/<repo>/ssh_port_fix.sh | sudo bash -s -- --port 34253 --only-sshd-config-d --reload
 EOF
 }
 
@@ -44,6 +50,15 @@ while [[ $# -gt 0 ]]; do
       ;;
     --reload)
       DO_RELOAD=true
+      shift
+      ;;
+    --with-sshd-config-d)
+      DO_PROCESS_D=true
+      shift
+      ;;
+    --only-sshd-config-d)
+      ONLY_D=true
+      DO_PROCESS_D=true
       shift
       ;;
     --no-reload)
@@ -362,6 +377,8 @@ main() {
   echo "Target fixed SSH port: ${FIXED_PORT}"
   echo "Dry run: ${DRY_RUN}"
   echo "Auto reload: ${DO_RELOAD}"
+  echo "Process sshd_config.d: ${DO_PROCESS_D}"
+  echo "Only process sshd_config.d: ${ONLY_D}"
   echo
 
   # pre checks
@@ -369,19 +386,27 @@ main() {
   check_port_available_or_exit "$FIXED_PORT"
 
   # modify
-  replace_or_append_port_in_file "$SERVER_MAIN"
-
-  shopt -s nullglob
-  local d_files=($SERVER_D_GLOB)
-  shopt -u nullglob
-
-  if (( ${#d_files[@]} == 0 )); then
-    record_summary "skip" "/etc/ssh/sshd_config.d/*.conf" "-" "-" "no files"
+  if [[ "$ONLY_D" != true ]]; then
+    replace_or_append_port_in_file "$SERVER_MAIN"
   else
-    local f
-    for f in "${d_files[@]}"; do
-      replace_or_append_port_in_file "$f"
-    done
+    record_summary "skip" "$SERVER_MAIN" "-" "-" "skipped (--only-sshd-config-d)"
+  fi
+
+  if [[ "$DO_PROCESS_D" == true ]]; then
+    shopt -s nullglob
+    local d_files=($SERVER_D_GLOB)
+    shopt -u nullglob
+
+    if (( ${#d_files[@]} == 0 )); then
+      record_summary "skip" "/etc/ssh/sshd_config.d/*.conf" "-" "-" "no files"
+    else
+      local f
+      for f in "${d_files[@]}"; do
+        replace_or_append_port_in_file "$f"
+      done
+    fi
+  else
+    record_summary "skip" "/etc/ssh/sshd_config.d/*.conf" "-" "-" "skipped (processing disabled)"
   fi
 
   echo
