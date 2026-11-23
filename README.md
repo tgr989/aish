@@ -158,7 +158,7 @@ All three files must come from the same commit or release. Pinning `REV` avoids 
 
 ```bash
 REV="<commit-or-tag>"
-BASE="https://raw.githubusercontent.com/tgr989/AIsh/${REV}"
+BASE="https://raw.githubusercontent.com/tgr989/aish/${REV}"
 
 for file in \
   nft-portfwd.sh \
