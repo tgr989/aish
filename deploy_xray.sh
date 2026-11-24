@@ -965,7 +965,7 @@ SHARE_ADDRESS="$(
 VLESS_URI=""
 SS_URI=""
 if mode_has_vless; then
-  VLESS_URI="vless://${UUID}@${URI_HOST}:${VLESS_PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${REALITY_SERVER_NAME}&fp=chrome&pbk=${REALITY_PASSWORD}&sid=${SHORT_ID}&type=tcp&headerType=none#${SHARE_ADDRESS}-${VLESS_PORT}-vless"
+  VLESS_URI="vless://${UUID}@${URI_HOST}:${VLESS_PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${REALITY_SERVER_NAME}&fp=chrome&pbk=${REALITY_PASSWORD}&sid=${SHORT_ID}&support-x25519mlkem768=true&type=tcp&headerType=none#${SHARE_ADDRESS}-${VLESS_PORT}-vless"
 fi
 if mode_has_ss; then
   SS_USERINFO="$(
@@ -1019,6 +1019,7 @@ Reality 私钥     : ${PRIVATE_KEY}
 Reality Password : ${REALITY_PASSWORD}
 Short ID         : ${SHORT_ID}
 Fingerprint      : chrome
+X25519MLKEM768   : true (reality-opts.support-x25519mlkem768: true)
 Network          : tcp
 
 VLESS 分享链接：
@@ -1035,6 +1036,43 @@ Password / PSK   : ${SS_PASSWORD}
 
 SS2022 分享链接：
 ${SS_URI}
+EOF
+fi
+
+cat >/dev/tty <<EOF
+---------------- Mihomo (Clash.Meta) ----------------
+proxies:
+EOF
+
+if mode_has_vless; then
+  cat >/dev/tty <<EOF
+  - name: "${SHARE_ADDRESS}-${VLESS_PORT}-vless"
+    type: vless
+    server: "${SERVER_ADDRESS}"
+    port: ${VLESS_PORT}
+    uuid: "${UUID}"
+    network: tcp
+    tls: true
+    udp: true
+    flow: xtls-rprx-vision
+    servername: "${REALITY_SERVER_NAME}"
+    client-fingerprint: chrome
+    reality-opts:
+      public-key: "${REALITY_PASSWORD}"
+      short-id: "${SHORT_ID}"
+      support-x25519mlkem768: true
+EOF
+fi
+
+if mode_has_ss; then
+  cat >/dev/tty <<EOF
+  - name: "${SHARE_ADDRESS}-${SS_PORT}-ss2022"
+    type: ss
+    server: "${SERVER_ADDRESS}"
+    port: ${SS_PORT}
+    cipher: "${SS_METHOD}"
+    password: "${SS_PASSWORD}"
+    udp: true
 EOF
 fi
 

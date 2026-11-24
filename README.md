@@ -399,7 +399,7 @@ sudo bash ./deploy_xray.sh
 
 Prompts can be prefilled with `DEPLOY_MODE`, `SERVER_ADDRESS`, `VLESS_PORT`, `SS_PORT`, `REALITY_SERVER_NAME`, `REALITY_TARGET_PORT`, `FALLBACK_PORT` and `SS_METHOD`. Port inputs accept `random` or `r` and are checked for TCP/UDP conflicts.
 
-The script resolves the selected `XTLS/Xray-install` commit through the GitHub API, downloads `install-release.sh`, verifies its Git blob SHA and then invokes the installer. `INSTALLER_REF` can pin a branch, tag or commit. The generated Xray configuration is syntax-tested before commit, previous configuration/service state is backed up for rollback, and credentials/share links are displayed once rather than saved in the summary.
+The script resolves the selected `XTLS/Xray-install` commit through the GitHub API, downloads `install-release.sh`, verifies its Git blob SHA and then invokes the installer. `INSTALLER_REF` can pin a branch, tag or commit. The generated Xray configuration is syntax-tested before commit, previous configuration/service state is backed up for rollback, and credentials, share links and Mihomo (`Clash.Meta`) snippets (including `reality-opts.support-x25519mlkem768: true` for REALITY) are displayed once rather than saved to disk.
 
 The Xray deployer does not modify host firewall or cloud security-group rules. Manually allow the displayed TCP/UDP ports after reviewing the deployment.
 
